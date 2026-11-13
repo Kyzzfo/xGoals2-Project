@@ -133,7 +133,7 @@
             btn.style.pointerEvents = "none";
 
             try {
-                const response = await fetch('http://localhost:8000/calcular', {
+                const response = await fetch('https://xgoals2-project.onrender.com/calcular', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ xg_442: xg442Data, xg_433: xg433Data, nivel_confianca: 0.05 })
@@ -171,7 +171,7 @@
             btn.style.pointerEvents = "none";
 
             try {
-                const response = await fetch('http://localhost:8000/calcular-csv', {
+                const response = await fetch('https://xgoals2-project.onrender.com/calcular-csv', {
                     method: 'POST',
                     body: formData
                 });
