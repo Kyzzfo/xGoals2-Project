@@ -1,0 +1,270 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    /* Cores do Gramado */
+    --grass-light: #3d8c40;
+    --grass-dark: #337536;
+    
+    /* Linhas do Campo */
+    --line-color: rgba(255, 255, 255, 0.85);
+    --line-width: 3px;
+    
+    /* Destaques e Placar */
+    --referee-yellow: #facc15;
+    --score-bg: #111111;
+    --score-green: #00ff66;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: radial-gradient(circle at center, #2c3e50, #0a0a0a);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0; /* Tiramos o padding para o campo colar nas bordas */
+    margin: 0;
+}
+
+.pitch-card {
+    width: 100%;
+    max-width: 100%; /* 100% para ocupar a tela toda */
+    min-height: 100vh; /* ocupa 100% da altura da tela */
+    background-color: var(--grass-light);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        var(--grass-light),
+        var(--grass-light) 45px,
+        var(--grass-dark) 45px,
+        var(--grass-dark) 90px
+    );
+    border: 4px solid var(--line-color);
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    overflow: hidden; 
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    /* Adicionamos estas duas linhas para manter o conteúdo centralizado e bonito */
+    align-items: center; 
+}
+
+/* CONTAINER DAS LINHAS DO CAMPO (Fica atrás do conteúdo) */
+.pitch-markings {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; /* Para não atrapalhar o clique nos botões */
+    z-index: 0;
+}
+
+/* Linha de Meio-Campo */
+.linha-central {
+    position: absolute;
+    top: 50%; left: 0; width: 100%; height: var(--line-width);
+    background-color: var(--line-color);
+    transform: translateY(-50%);
+}
+
+/* Círculo Central e Ponto */
+.circulo-central {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 130px; height: 130px;
+    border: var(--line-width) solid var(--line-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+.ponto-central {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 10px; height: 10px;
+    background-color: var(--line-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Grandes Áreas */
+.grande-area-top {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 220px; height: 80px;
+    border: var(--line-width) solid var(--line-color);
+    border-top: none;
+}
+.grande-area-bottom {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 220px; height: 80px;
+    border: var(--line-width) solid var(--line-color);
+    border-bottom: none;
+}
+
+/* Meias-Luas (Arcos da grande área) */
+.meia-lua-top {
+    position: absolute;
+    top: 80px; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 45px;
+    border: var(--line-width) solid var(--line-color);
+    border-top: none;
+    border-radius: 0 0 90px 90px;
+}
+.meia-lua-bottom {
+    position: absolute;
+    bottom: 80px; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 45px;
+    border: var(--line-width) solid var(--line-color);
+    border-bottom: none;
+    border-radius: 90px 90px 0 0;
+}
+
+/* CONTEÚDO DA PÁGINA (Fica por cima do gramado) */
+.content-layer {
+    position: relative;
+    z-index: 1;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 600px; /* Mantém os botões em um tamanho agradável no centro */
+}
+
+h1 { 
+    color: white;
+    text-align: center;
+    font-size: 1.6rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+    margin-top: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group { margin-bottom: 1.5rem; }
+
+/* Labels estilizadas como tags de posição de jogador */
+label { 
+    display: inline-block; 
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.3);
+    font-weight: 700; 
+    margin-bottom: 0.5rem; 
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+/* Inputs parecendo folhas de papel tático no chão */
+textarea {
+    width: 100%;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #111;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    resize: vertical;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--referee-yellow);
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.5);
+    background-color: #fff;
+}
+
+/* Botão estilizado como cartão amarelo/equipamento de treino */
+button {
+    background-color: var(--referee-yellow);
+    color: #000;
+    border: none;
+    padding: 1.2rem;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    font-family: 'Montserrat', sans-serif;
+    margin-top: 1rem;
+}
+
+button:hover { 
+    background-color: #eab308; 
+    transform: scale(1.02);
+}
+
+/* Resultado simulando um Placar Eletrônico */
+#resultado {
+    margin-top: auto;
+    background-color: var(--score-bg);
+    border: 4px solid #333;
+    border-radius: 8px;
+    padding: 1.5rem;
+    color: white;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.7), inset 0 0 15px rgba(0,0,0,0.9);
+    display: none;
+    position: relative;
+}
+
+#resultado::before {
+    content: "PLACAR ANALÍTICO";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+#medias {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.95rem;
+    color: #ddd;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+}
+
+#resultado p strong {
+    color: #aaa;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.veredicto { 
+    font-weight: 800; 
+    color: var(--score-green); 
+    font-size: 1.1rem; 
+    margin-top: 1rem; 
+    padding-top: 1rem;
+    border-top: 1px solid #333;
+    text-align: center;
+}
+
+.error { 
+    border-color: #dc2626 !important; 
+}
+.error .veredicto {
+    color: #ef4444;
+} 

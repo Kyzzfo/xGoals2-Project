@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor de Teste A/B Tático</title>
+    
+    <!-- Importando as fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="img/ballico.png">
+    <!-- Linkando o arquivo CSS externo -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="pitch-card">
+        
+        <!-- PINTURA DAS LINHAS DO CAMPO NO CSS -->
+        <div class="pitch-markings">
+            <div class="grande-area-top"></div>
+            <div class="meia-lua-top"></div>
+            
+            <div class="linha-central"></div>
+            <div class="circulo-central"></div>
+            <div class="ponto-central"></div>
+            
+            <div class="grande-area-bottom"></div>
+            <div class="meia-lua-bottom"></div>
+        </div>
+
+        <!-- CONTEÚDO (Inputs e Textos) -->
+        <div class="content-layer">
+            <h1>Análise Tática xG</h1>
+            
+            <!-- ABAS DE NAVEGAÇÃO (MANUAL VS CSV) -->
+            <div class="tabs" style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+                <button type="button" class="tab-btn active" id="tabManual" onclick="alternarAba('manual')" style="flex: 1; padding: 0.5rem; font-weight: bold; cursor: pointer;">Entrada Manual</button>
+                <button type="button" class="tab-btn" id="tabCsv" onclick="alternarAba('csv')" style="flex: 1; padding: 0.5rem; font-weight: bold; cursor: pointer;">Upload CSV</button>
+            </div>
+
+            <!-- SEÇÃO 1: ENTRADA MANUAL (Padrão) -->
+            <div id="secao-manual">
+                <div class="form-group">
+                    <label for="xg442">⚽ Formação 4-4-2</label>
+                    <textarea id="xg442" rows="3" placeholder="Ex: 1.25, 0.80, 2.10..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="xg433">⚽ Formação 4-3-3</label>
+                    <textarea id="xg433" rows="3" placeholder="Ex: 1.90, 2.30, 1.15..."></textarea>
+                </div>
+
+                <button onclick="calcularManual()" id="btnCalcular">Processar Estatísticas</button>
+            </div>
+
+            <!-- SEÇÃO 2: UPLOAD DE ARQUIVO CSV -->
+            <div id="secao-csv" style="display: none;">
+                <div class="form-group">
+                    <label for="csvFile">📁 Selecione o arquivo .CSV</label>
+                    <input type="file" id="csvFile" accept=".csv" style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.9); border-radius: 4px; box-sizing: border-box;">
+                    <small style="color: #cbd5e1; display: block; margin-top: 0.5rem;">Formato esperado: colunas <code>esquema</code> e <code>xg</code> ou <code>xg_442</code> e <code>xg_433</code>.</small>
+                </div>
+
+                <button onclick="calcularCSV()" id="btnCalcularCSV" style="margin-top: 1rem;">Processar Arquivo CSV</button>
+            </div>
+
+            <!-- EXIBIÇÃO DE RESULTADOS -->
+            <div id="resultado" style="display: none;">
+                <p id="medias"></p>
+                <p><strong>P-Valor:</strong> <span id="pvalor" style="font-family: 'Roboto Mono', monospace; color: var(--score-green);"></span></p>
+                <p class="veredicto" id="veredictoText"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let modoAtual = 'manual';
+
+        function alternarAba(modo) {
+            modoAtual = modo;
+            document.getElementById('secao-manual').style.display = modo === 'manual' ? 'block' : 'none';
+            document.getElementById('secao-csv').style.display = modo === 'csv' ? 'block' : 'none';
+            document.getElementById('resultado').style.display = 'none';
+
+            document.getElementById('tabManual').classList.toggle('active', modo === 'manual');
+            document.getElementById('tabCsv').classList.toggle('active', modo === 'csv');
+        }
+
+        function processarInput(texto) {
+            return texto.split(',')
+                .map(item => parseFloat(item.trim()))
+                .filter(num => !isNaN(num));
+        }
+
+        function renderizarResultado(dados) {
+            const resultDiv = document.getElementById('resultado');
+            const veredictoEl = document.getElementById('veredictoText');
+
+            document.getElementById('medias').innerHTML = `
+                <strong>Média 4-4-2:</strong> ${dados.media_442} <br> 
+                <strong>Média 4-3-3:</strong> ${dados.media_433}
+            `;
+            document.getElementById('pvalor').innerText = dados.p_valor;
+            veredictoEl.innerText = dados.veredito;
+            veredictoEl.style.color = dados.significativo ? 'var(--score-green)' : '#facc15';
+
+            resultDiv.style.display = 'block';
+            resultDiv.className = '';
+        }
+
+        function renderizarErro(mensagem) {
+            const resultDiv = document.getElementById('resultado');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error';
+            document.getElementById('medias').innerHTML = "";
+            document.getElementById('pvalor').innerText = "ERROR";
+            document.getElementById('veredictoText').innerText = mensagem;
+        }
+
+        // Envios via Formulário Manual (JSON)
+        async function calcularManual() {
+            const xg442Data = processarInput(document.getElementById('xg442').value);
+            const xg433Data = processarInput(document.getElementById('xg433').value);
+            const btn = document.getElementById('btnCalcular');
+
+            if (xg442Data.length < 2 || xg433Data.length < 2) {
+                alert("VAR INFORMA: Insira pelo menos 2 valores válidos em cada formação (separados por vírgula).");
+                return;
+            }
+
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Analisando no VAR...";
+            btn.style.pointerEvents = "none";
+
+            try {
+                const response = await fetch('http://localhost:8000/calcular', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ xg_442: xg442Data, xg_433: xg433Data, nivel_confianca: 0.05 })
+                });
+
+                if (!response.ok) throw new Error("Erro na API");
+
+                const dados = await response.json();
+                renderizarResultado(dados);
+
+            } catch (error) {
+                renderizarErro("FALHA DE COMUNICAÇÃO COM O SERVIDOR (API OFFLINE)");
+            } finally {
+                btn.innerText = originalText;
+                btn.style.pointerEvents = "auto";
+            }
+        }
+
+        // Envios via Upload de CSV
+        async function calcularCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const btn = document.getElementById('btnCalcularCSV');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("VAR INFORMA: Selecione um arquivo .CSV antes de processar.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('nivel_confianca', '0.05');
+
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Lendo dados do CSV...";
+            btn.style.pointerEvents = "none";
+
+            try {
+                const response = await fetch('http://localhost:8000/calcular-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Erro ao processar CSV");
+                }
+
+                const dados = await response.json();
+                renderizarResultado(dados);
+
+            } catch (error) {
+                renderizarErro(`ERRO AO PROCESSAR CSV: ${error.message}`);
+            } finally {
+                btn.innerText = originalText;
+                btn.style.pointerEvents = "auto";
+            }
+        }
+    </script>
+</body>
+</html>
